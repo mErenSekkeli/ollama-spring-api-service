@@ -2,6 +2,7 @@ package org.erensekkeli.chatbotservice.general;
 
 import lombok.RequiredArgsConstructor;
 import org.erensekkeli.chatbotservice.exceptions.ItemNotFoundException;
+import org.erensekkeli.chatbotservice.exceptions.WrongPathArgumentException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -63,5 +64,17 @@ public class GeneralControllerAdvice extends ResponseEntityExceptionHandler {
         var restResponse = RestResponse.error(generalErrorMessages);
 
         return new ResponseEntity<>(restResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler
+    public final ResponseEntity<Object> handleWrongPathArgumentException(WrongPathArgumentException e, WebRequest request) {
+
+        String message = e.getMessage();
+        String description = request.getDescription(false);
+
+        var generalErrorMessages = new GeneralErrorMessages(LocalDateTime.now(), message, description);
+        var restResponse = RestResponse.error(generalErrorMessages);
+
+        return new ResponseEntity<>(restResponse, HttpStatus.BAD_REQUEST);
     }
 }
