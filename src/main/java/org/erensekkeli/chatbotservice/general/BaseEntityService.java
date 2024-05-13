@@ -46,7 +46,7 @@ public abstract class BaseEntityService<E extends BaseEntity, R extends JpaRepos
     }
 
     public E findByIdWithControl(Long id) {
-        return repository.findById(id).orElseThrow(() -> new ItemNotFoundException("Data Has Not Found!"));
+        return repository.findById(id).orElseThrow(() -> new ItemNotFoundException("Data Has Not Found With This Id: " + id));
     }
 
     public void delete(Long id) {
