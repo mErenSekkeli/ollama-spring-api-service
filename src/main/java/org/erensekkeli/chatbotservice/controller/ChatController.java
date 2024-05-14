@@ -25,13 +25,15 @@ public class ChatController {
     @PostMapping("/message")
     public ResponseEntity<RestResponse<ChatResponseDTO>> processUserMessage(@RequestBody ChatContentRequest request) {
         Map<String, String> llamaResponse = llamaService.generateResponse(request);
-        ChatResponseDTO chatResponseDTO = new ChatResponseDTO(llamaResponse.get("response"));
+        ChatResponseDTO chatResponseDTO = new ChatResponseDTO();
+        chatResponseDTO.setMessage(new ChatResponseDTO.Message());
+        chatResponseDTO.getMessage().setContent(llamaResponse.get("response"));
         return ResponseEntity.ok(RestResponse.of(chatResponseDTO));
     }
 
     @PostMapping("/message/stream")
-    public ResponseEntity<RestResponse<Flux<ChatResponse>>> processUserMessageStream(@RequestBody ChatContentRequest request) {
-        Flux<ChatResponse> llamaStreamResponse = llamaService.generateStreamResponse(request);
+    public ResponseEntity<RestResponse<ChatResponseDTO>> processUserMessageStream(@RequestBody ChatContentRequest request) {
+        ChatResponseDTO llamaStreamResponse = llamaService.generateStreamResponse(request);
         return ResponseEntity.ok(RestResponse.of(llamaStreamResponse));
     }
 }
