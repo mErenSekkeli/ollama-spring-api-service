@@ -1,7 +1,7 @@
 package org.erensekkeli.chatbotservice.controller.contract;
 
 import org.erensekkeli.chatbotservice.dto.UserMessageDTO;
-import org.erensekkeli.chatbotservice.dto.UserMessageSendRequest;
+import org.erensekkeli.chatbotservice.request.UserMessageSendRequest;
 
 import java.util.List;
 

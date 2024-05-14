@@ -2,8 +2,8 @@ package org.erensekkeli.chatbotservice.controller;
 
 import org.erensekkeli.chatbotservice.controller.contract.SessionControllerContract;
 import org.erensekkeli.chatbotservice.dto.SessionDTO;
-import org.erensekkeli.chatbotservice.dto.SessionSaveRequest;
-import org.erensekkeli.chatbotservice.dto.SessionUpdateRequest;
+import org.erensekkeli.chatbotservice.request.SessionSaveRequest;
+import org.erensekkeli.chatbotservice.request.SessionUpdateRequest;
 import org.erensekkeli.chatbotservice.general.RestResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;

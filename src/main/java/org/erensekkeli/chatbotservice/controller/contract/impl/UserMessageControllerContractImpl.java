@@ -3,7 +3,7 @@ package org.erensekkeli.chatbotservice.controller.contract.impl;
 import lombok.RequiredArgsConstructor;
 import org.erensekkeli.chatbotservice.controller.contract.UserMessageControllerContract;
 import org.erensekkeli.chatbotservice.dto.UserMessageDTO;
-import org.erensekkeli.chatbotservice.dto.UserMessageSendRequest;
+import org.erensekkeli.chatbotservice.request.UserMessageSendRequest;
 import org.erensekkeli.chatbotservice.entity.Session;
 import org.erensekkeli.chatbotservice.entity.UserMessage;
 import org.erensekkeli.chatbotservice.exceptions.ItemNotFoundException;

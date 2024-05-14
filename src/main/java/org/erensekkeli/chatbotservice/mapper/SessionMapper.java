@@ -1,7 +1,7 @@
 package org.erensekkeli.chatbotservice.mapper;
 
 import org.erensekkeli.chatbotservice.dto.SessionDTO;
-import org.erensekkeli.chatbotservice.dto.SessionUpdateRequest;
+import org.erensekkeli.chatbotservice.request.SessionUpdateRequest;
 import org.erensekkeli.chatbotservice.entity.Session;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;

@@ -1,8 +1,8 @@
 package org.erensekkeli.chatbotservice.controller.contract;
 
 import org.erensekkeli.chatbotservice.dto.SessionDTO;
-import org.erensekkeli.chatbotservice.dto.SessionSaveRequest;
-import org.erensekkeli.chatbotservice.dto.SessionUpdateRequest;
+import org.erensekkeli.chatbotservice.request.SessionSaveRequest;
+import org.erensekkeli.chatbotservice.request.SessionUpdateRequest;
 
 import java.util.List;
 

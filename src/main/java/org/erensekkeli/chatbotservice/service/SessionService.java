@@ -23,4 +23,7 @@ public class SessionService extends BaseEntityService<Session, SessionRepository
         return getRepository().findBySessionKey(key);
     }
 
+    public boolean isSessionKeyValid(String s, Long aLong) {
+        return getRepository().findBySessionKeyAndCustomerId(s, aLong).isPresent();
+    }
 }

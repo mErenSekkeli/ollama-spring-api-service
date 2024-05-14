@@ -1,4 +1,4 @@
-package org.erensekkeli.chatbotservice.dto;
+package org.erensekkeli.chatbotservice.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;

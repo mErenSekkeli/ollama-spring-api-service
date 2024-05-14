@@ -1,8 +1,8 @@
 package org.erensekkeli.chatbotservice.controller.contract;
 
 import org.erensekkeli.chatbotservice.dto.CustomerDTO;
-import org.erensekkeli.chatbotservice.dto.CustomerSaveRequest;
-import org.erensekkeli.chatbotservice.dto.CustomerUpdateRequest;
+import org.erensekkeli.chatbotservice.request.CustomerSaveRequest;
+import org.erensekkeli.chatbotservice.request.CustomerUpdateRequest;
 
 import java.util.List;
 

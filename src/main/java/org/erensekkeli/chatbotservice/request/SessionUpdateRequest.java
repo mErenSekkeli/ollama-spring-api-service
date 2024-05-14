@@ -1,4 +1,4 @@
-package org.erensekkeli.chatbotservice.dto;
+package org.erensekkeli.chatbotservice.request;
 
 import org.erensekkeli.chatbotservice.enums.EnumSessionStatus;
 

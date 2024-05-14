@@ -13,4 +13,6 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     List<Session> findAllByStatus(EnumSessionStatus enumSessionStatus);
 
     Optional<Session> findBySessionKey(String key);
+
+    Optional<Object> findBySessionKeyAndCustomerId(String s, Long aLong);
 }

@@ -3,7 +3,7 @@ package org.erensekkeli.chatbotservice.controller;
 import lombok.RequiredArgsConstructor;
 import org.erensekkeli.chatbotservice.controller.contract.UserMessageControllerContract;
 import org.erensekkeli.chatbotservice.dto.UserMessageDTO;
-import org.erensekkeli.chatbotservice.dto.UserMessageSendRequest;
+import org.erensekkeli.chatbotservice.request.UserMessageSendRequest;
 import org.erensekkeli.chatbotservice.exceptions.WrongPathArgumentException;
 import org.erensekkeli.chatbotservice.general.RestResponse;
 import org.springframework.http.ResponseEntity;
