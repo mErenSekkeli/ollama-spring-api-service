@@ -26,4 +26,9 @@ public class SessionService extends BaseEntityService<Session, SessionRepository
     public boolean isSessionKeyValid(String s, Long aLong) {
         return getRepository().findBySessionKeyAndCustomerId(s, aLong).isPresent();
     }
+
+    public void endSession(Session session) {
+        session.setStatus(EnumSessionStatus.ENDED);
+        getRepository().save(session);
+    }
 }

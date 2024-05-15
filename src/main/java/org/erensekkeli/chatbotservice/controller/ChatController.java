@@ -1,18 +1,17 @@
 package org.erensekkeli.chatbotservice.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.erensekkeli.chatbotservice.dto.ChatCompletionDTO;
 import org.erensekkeli.chatbotservice.dto.ChatResponseDTO;
 import org.erensekkeli.chatbotservice.general.RestResponse;
 import org.erensekkeli.chatbotservice.request.ChatContentRequest;
+import org.erensekkeli.chatbotservice.request.SessionSaveRequest;
 import org.erensekkeli.chatbotservice.service.LlamaService;
-import org.springframework.ai.chat.ChatResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Flux;
-
 import java.util.Map;
 
 @RestController
@@ -31,9 +30,16 @@ public class ChatController {
         return ResponseEntity.ok(RestResponse.of(chatResponseDTO));
     }
 
+    @PostMapping("/message/start")
+    public ResponseEntity<RestResponse<ChatCompletionDTO>> processUserMessageStart(@RequestBody SessionSaveRequest request) {
+        ChatCompletionDTO llamaStartResponse = llamaService.startNewChat(request);
+        return ResponseEntity.ok(RestResponse.of(llamaStartResponse));
+    }
+
+
     @PostMapping("/message/stream")
-    public ResponseEntity<RestResponse<ChatResponseDTO>> processUserMessageStream(@RequestBody ChatContentRequest request) {
-        ChatResponseDTO llamaStreamResponse = llamaService.generateStreamResponse(request);
+    public ResponseEntity<RestResponse<ChatCompletionDTO>> processUserMessageStream(@RequestBody ChatContentRequest request) {
+        ChatCompletionDTO llamaStreamResponse = llamaService.generateStreamResponse(request);
         return ResponseEntity.ok(RestResponse.of(llamaStreamResponse));
     }
 }

@@ -13,6 +13,7 @@ import org.erensekkeli.chatbotservice.enums.EnumStatus;
 import org.erensekkeli.chatbotservice.general.BaseEntity;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "customer")
@@ -54,5 +55,8 @@ public class Customer extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 30, nullable = false)
     private EnumStatus status;
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.REMOVE)
+    private List<Session> sessions;
 
 }
