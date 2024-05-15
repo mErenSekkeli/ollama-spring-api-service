@@ -1,30 +1,28 @@
 package org.erensekkeli.chatbotservice.service;
 
-import org.erensekkeli.chatbotservice.dto.ChatResponseDTO;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.erensekkeli.chatbotservice.dto.ChatCompletionDTO;
+import org.erensekkeli.chatbotservice.entity.Customer;
 import org.erensekkeli.chatbotservice.entity.Session;
 import org.erensekkeli.chatbotservice.entity.UserMessage;
+import org.erensekkeli.chatbotservice.enums.EnumSessionStatus;
 import org.erensekkeli.chatbotservice.exceptions.InvalidSessionException;
 import org.erensekkeli.chatbotservice.exceptions.ItemNotFoundException;
+import org.erensekkeli.chatbotservice.request.ChatCompletionRequest;
 import org.erensekkeli.chatbotservice.request.ChatContentRequest;
-import org.springframework.ai.chat.ChatResponse;
-import org.springframework.ai.chat.messages.ChatMessage;
-import org.springframework.ai.chat.prompt.Prompt;
+import org.erensekkeli.chatbotservice.request.ChatMessageRequest;
+import org.erensekkeli.chatbotservice.request.SessionSaveRequest;
+import org.erensekkeli.chatbotservice.util.RandomKeyGenerator;
 import org.springframework.ai.ollama.OllamaChatClient;
-import org.springframework.ai.ollama.api.OllamaApi;
-import org.springframework.ai.ollama.api.OllamaOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import org.springframework.web.client.RestTemplate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,16 +33,22 @@ public class LlamaService {
 
     private final OllamaChatClient chatClient;
     private final SessionService sessionService;
+    private final CustomerService customerService;
     private final UserMessageService userMessageService;
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
 
     @Value("${spring.ai.ollama.base-url}")
     private String baseUrl;
 
     @Autowired
-    public LlamaService(OllamaChatClient chatClient, SessionService sessionService, UserMessageService userMessageService) {
+    public LlamaService(OllamaChatClient chatClient, SessionService sessionService, CustomerService customerService, UserMessageService userMessageService, RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.chatClient = chatClient;
         this.sessionService = sessionService;
+        this.customerService = customerService;
         this.userMessageService = userMessageService;
+        this.restTemplate = restTemplate;
+        this.objectMapper = objectMapper;
     }
 
     public Map<String, String> generateResponse(ChatContentRequest request) {
@@ -56,7 +60,8 @@ public class LlamaService {
         return Map.of("response", chatClient.call(message));
     }
 
-    public ChatResponseDTO generateStreamResponse(ChatContentRequest request) {
+
+    public ChatCompletionDTO generateStreamResponse(ChatContentRequest request) {
         if (isSessionKeyValid(request.sessionKey(), request.userId())) {
             throw new InvalidSessionException("Session key is not valid for this user id");
         }
@@ -82,41 +87,26 @@ public class LlamaService {
         List<UserMessage> chatHistory = userMessageService.findBySessionKey(session.get().getSessionKey());
 
         // Convert the chat history to a list of messages for the Ollama API
-        List<OllamaApi.Message> messages = chatHistory.stream()
-                .map(msg -> new OllamaApi.Message(
-                        msg.getIsCustomer() ? OllamaApi.Message.Role.USER : OllamaApi.Message.Role.ASSISTANT,
-                        msg.getContent(),
-                        null))
+        List<ChatMessageRequest> messages = chatHistory.stream()
+                .map(msg -> new ChatMessageRequest(
+                        msg.getIsCustomer() ? "user" : "assistant",
+                        msg.getContent()))
                 .collect(Collectors.toList());
 
         // Add the current user message to the list of messages
-        messages.add(new OllamaApi.Message(OllamaApi.Message.Role.USER, request.content(), null));
+        messages.add(new ChatMessageRequest("user", request.content()));
 
-        // Create a ChatRequest object
-        OllamaApi.ChatRequest chatRequest = new OllamaApi.ChatRequest(
-                request.model(),
-                messages,
-                true,
-                "json",
-                null
-        );
-
-        // Create a WebClient instance
-        WebClient webClient = WebClient.create(baseUrl);
+        // Create a ChatCompletionRequest object
+        ChatCompletionRequest chatCompletionRequest = new ChatCompletionRequest();
+        chatCompletionRequest.setModel("llama3");
+        chatCompletionRequest.setMessages(messages);
 
         // Send the chat request to the Ollama API
-        ChatResponseDTO response = webClient.post()
-                .uri("/api/chat")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(chatRequest)
-                .retrieve()
-                .bodyToMono(ChatResponseDTO.class)
-                .block();
+        ChatCompletionDTO response = generateChatCompletion(messages);
 
         // Create a new user message for the assistant's response
         UserMessage responseMessage = new UserMessage();
         responseMessage.setSession(session.get());
-        assert response != null;
         responseMessage.setContent(response.getMessage().getContent());
         responseMessage.setMessageTime(LocalDateTime.now());
         responseMessage.setIsCustomer(false);
@@ -126,6 +116,91 @@ public class LlamaService {
 
         return response;
     }
+    //TODO: stream false is ending the chat so you can start a new chat. Past messages are already saved in the database.
+    public ChatCompletionDTO startNewChat(SessionSaveRequest request) {
+        Customer customer = customerService.findByIdWithControl(request.customerId());
+
+        // Create a new session for the customer
+        Session session = new Session();
+        session.setCustomer(customer);
+        session.setSessionKey(RandomKeyGenerator.generateComplexId());
+        session.setLastActivityTime(LocalDateTime.now());
+        session.setStatus(EnumSessionStatus.ACTIVE);
+
+        // Save the session
+        sessionService.save(session);
+
+        // Create a ChatCompletionRequest object
+        ChatCompletionRequest chatCompletionRequest = new ChatCompletionRequest();
+        chatCompletionRequest.setModel(request.model());
+        chatCompletionRequest.setMessages(Collections.emptyList());
+
+        // Send the chat request to the Ollama API
+        ChatCompletionDTO response = generateChatCompletion(chatCompletionRequest.getMessages());
+        response.setSessionKey(session.getSessionKey());
+        // Create a new user message for the assistant's response
+        UserMessage responseMessage = new UserMessage();
+        responseMessage.setSession(session);
+        responseMessage.setContent(response.getMessage().getContent());
+        responseMessage.setMessageTime(LocalDateTime.now());
+        responseMessage.setIsCustomer(false);
+
+        // Save the user message
+        userMessageService.save(responseMessage);
+
+        return response;
+    }
+
+    private ChatCompletionDTO generateChatCompletion(List<ChatMessageRequest> messages) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        ChatCompletionRequest request = new ChatCompletionRequest();
+        request.setModel("llama3");
+        request.setMessages(messages);
+
+        HttpEntity<ChatCompletionRequest> entity = new HttpEntity<>(request, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                baseUrl + "/api/chat",
+                HttpMethod.POST,
+                entity,
+                String.class
+        );
+
+        String responseBody = response.getBody();
+        try {
+            StringBuilder contentBuilder = new StringBuilder();
+            String[] jsonObjects = responseBody.split("\\r?\\n");
+            ChatCompletionDTO chatCompletion = null;
+
+            for (String jsonObject : jsonObjects) {
+                if (!jsonObject.trim().isEmpty()) {
+                    JsonNode jsonNode = objectMapper.readTree(jsonObject);
+                    ChatCompletionDTO partialCompletion = objectMapper.treeToValue(jsonNode, ChatCompletionDTO.class);
+
+                    if (chatCompletion == null) {
+                        chatCompletion = partialCompletion;
+                    }
+
+                    contentBuilder.append(partialCompletion.getMessage().getContent());
+
+                    if (partialCompletion.isDone()) {
+                        break;
+                    }
+                }
+            }
+
+            if (chatCompletion != null) {
+                chatCompletion.getMessage().setContent(contentBuilder.toString());
+            }
+
+            return chatCompletion;
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error while parsing JSON response", e);
+        }
+    }
+
 
     private boolean isSessionKeyValid(String sessionKey, Long userId) {
         return !sessionService.isSessionKeyValid(sessionKey, userId);

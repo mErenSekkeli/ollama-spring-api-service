@@ -9,6 +9,7 @@ import org.erensekkeli.chatbotservice.enums.EnumSessionStatus;
 import org.erensekkeli.chatbotservice.general.BaseEntity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "session")
@@ -39,5 +40,8 @@ public class Session extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     private EnumSessionStatus status;
+
+    @OneToMany(mappedBy = "session", cascade = CascadeType.REMOVE)
+    private List<UserMessage> userMessages;
 
 }
