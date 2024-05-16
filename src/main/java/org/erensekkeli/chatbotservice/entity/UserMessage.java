@@ -26,7 +26,7 @@ public class UserMessage extends BaseEntity {
     @JoinColumn(name = "session_id", nullable = false)
     private Session session;
 
-    @Column(name = "content", nullable = false, length = 1000)
+    @Column(name = "content", nullable = false, length = 20000)
     private String content;
 
     @Column(name = "message_time", nullable = false)

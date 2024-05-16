@@ -64,6 +64,7 @@ public class UserMessageController {
 
     }
 
+    //TODO: this endpoint should only be accessible by admin users because we already saving the messages on llama service
     @PostMapping("/send")
     public ResponseEntity<RestResponse<UserMessageDTO>> sendUserMessage(@RequestBody UserMessageSendRequest request) {
         UserMessageDTO sentUserMessage = userMessageControllerContract.sendUserMessage(request);

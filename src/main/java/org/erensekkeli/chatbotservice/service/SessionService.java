@@ -31,4 +31,5 @@ public class SessionService extends BaseEntityService<Session, SessionRepository
         session.setStatus(EnumSessionStatus.ENDED);
         getRepository().save(session);
     }
+
 }
