@@ -1,7 +1,6 @@
 package org.erensekkeli.chatbotservice.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.erensekkeli.chatbotservice.dto.ChatCompletionDTO;
 import org.erensekkeli.chatbotservice.entity.Customer;
@@ -22,10 +21,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -66,7 +62,6 @@ public class LlamaService {
             throw new InvalidSessionException("Session key is not valid for this user id");
         }
 
-        // Retrieve the session based on the session key
         Optional<Session> session = sessionService.findByKey(request.sessionKey());
 
         if (session.isEmpty()) {
@@ -100,9 +95,10 @@ public class LlamaService {
         ChatCompletionRequest chatCompletionRequest = new ChatCompletionRequest();
         chatCompletionRequest.setModel("llama3");
         chatCompletionRequest.setMessages(messages);
+        chatCompletionRequest.setStream(true); // Set stream to true to continue the chat
 
         // Send the chat request to the Ollama API
-        ChatCompletionDTO response = generateChatCompletion(messages);
+        ChatCompletionDTO response = generateChatCompletion(chatCompletionRequest);
 
         // Create a new user message for the assistant's response
         UserMessage responseMessage = new UserMessage();
@@ -116,7 +112,7 @@ public class LlamaService {
 
         return response;
     }
-    //TODO: stream false is ending the chat so you can start a new chat. Past messages are already saved in the database.
+
     public ChatCompletionDTO startNewChat(SessionSaveRequest request) {
         Customer customer = customerService.findByIdWithControl(request.customerId());
 
@@ -130,64 +126,62 @@ public class LlamaService {
         // Save the session
         sessionService.save(session);
 
-        // Create a ChatCompletionRequest object
+        // Create a ChatCompletionRequest object with an empty message list
         ChatCompletionRequest chatCompletionRequest = new ChatCompletionRequest();
         chatCompletionRequest.setModel(request.model());
         chatCompletionRequest.setMessages(Collections.emptyList());
+        chatCompletionRequest.setStream(false); // Set stream to false to start a new chat
 
         // Send the chat request to the Ollama API
-        ChatCompletionDTO response = generateChatCompletion(chatCompletionRequest.getMessages());
+        ChatCompletionDTO response = generateChatCompletion(chatCompletionRequest);
         response.setSessionKey(session.getSessionKey());
-        // Create a new user message for the assistant's response
-        UserMessage responseMessage = new UserMessage();
-        responseMessage.setSession(session);
-        responseMessage.setContent(response.getMessage().getContent());
-        responseMessage.setMessageTime(LocalDateTime.now());
-        responseMessage.setIsCustomer(false);
-
-        // Save the user message
-        userMessageService.save(responseMessage);
 
         return response;
     }
 
-    private ChatCompletionDTO generateChatCompletion(List<ChatMessageRequest> messages) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+    public boolean endChat(ChatContentRequest request) {
+        if (isSessionKeyValid(request.sessionKey(), request.userId())) {
+            throw new InvalidSessionException("Session key is not valid for this user id");
+        }
 
-        ChatCompletionRequest request = new ChatCompletionRequest();
-        request.setModel("llama3");
-        request.setMessages(messages);
+        Optional<Session> session = sessionService.findByKey(request.sessionKey());
 
-        HttpEntity<ChatCompletionRequest> entity = new HttpEntity<>(request, headers);
+        if (session.isEmpty()) {
+            throw new ItemNotFoundException("Session not found");
+        }
 
-        ResponseEntity<String> response = restTemplate.exchange(
+        ChatCompletionRequest chatCompletionRequest = new ChatCompletionRequest();
+        chatCompletionRequest.setModel("llama3");
+        chatCompletionRequest.setMessages(Collections.emptyList());
+        chatCompletionRequest.setStream(false);
+
+        ChatCompletionDTO completion = generateChatCompletion(chatCompletionRequest);
+
+        if(completion.isDone()){
+            sessionService.delete(session.get().getId());
+            return true;
+        }
+        return false;
+    }
+
+    private ChatCompletionDTO generateChatCompletion(ChatCompletionRequest request) {
+        ResponseEntity<String> response = restTemplate.postForEntity(
                 baseUrl + "/api/chat",
-                HttpMethod.POST,
-                entity,
+                request,
                 String.class
         );
 
-        String responseBody = response.getBody();
         try {
+            String[] jsonObjects = Objects.requireNonNull(response.getBody()).split("\\r?\\n");
             StringBuilder contentBuilder = new StringBuilder();
-            String[] jsonObjects = responseBody.split("\\r?\\n");
             ChatCompletionDTO chatCompletion = null;
 
             for (String jsonObject : jsonObjects) {
                 if (!jsonObject.trim().isEmpty()) {
-                    JsonNode jsonNode = objectMapper.readTree(jsonObject);
-                    ChatCompletionDTO partialCompletion = objectMapper.treeToValue(jsonNode, ChatCompletionDTO.class);
-
-                    if (chatCompletion == null) {
-                        chatCompletion = partialCompletion;
-                    }
-
+                    ChatCompletionDTO partialCompletion = objectMapper.readValue(jsonObject, ChatCompletionDTO.class);
+                    chatCompletion = (chatCompletion == null) ? partialCompletion : chatCompletion;
                     contentBuilder.append(partialCompletion.getMessage().getContent());
-
-                    if (partialCompletion.isDone()) {
-                        break;
-                    }
+                    if (partialCompletion.isDone()) break;
                 }
             }
 
