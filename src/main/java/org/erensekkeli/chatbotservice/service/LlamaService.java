@@ -2,6 +2,7 @@ package org.erensekkeli.chatbotservice.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.erensekkeli.chatbotservice.dto.ChatCompletionDTO;
 import org.erensekkeli.chatbotservice.entity.Customer;
 import org.erensekkeli.chatbotservice.entity.Session;
@@ -15,7 +16,6 @@ import org.erensekkeli.chatbotservice.request.ChatMessageRequest;
 import org.erensekkeli.chatbotservice.request.SessionSaveRequest;
 import org.erensekkeli.chatbotservice.util.RandomKeyGenerator;
 import org.springframework.ai.ollama.OllamaChatClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -25,6 +25,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class LlamaService {
 
     private final OllamaChatClient chatClient;
@@ -36,16 +37,6 @@ public class LlamaService {
 
     @Value("${spring.ai.ollama.base-url}")
     private String baseUrl;
-
-    @Autowired
-    public LlamaService(OllamaChatClient chatClient, SessionService sessionService, CustomerService customerService, UserMessageService userMessageService, RestTemplate restTemplate, ObjectMapper objectMapper) {
-        this.chatClient = chatClient;
-        this.sessionService = sessionService;
-        this.customerService = customerService;
-        this.userMessageService = userMessageService;
-        this.restTemplate = restTemplate;
-        this.objectMapper = objectMapper;
-    }
 
     public Map<String, String> generateResponse(ChatContentRequest request) {
         if (isSessionKeyValid(request.sessionKey(), request.userId())) {
