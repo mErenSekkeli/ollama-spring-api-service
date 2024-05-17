@@ -1,5 +1,7 @@
 package org.erensekkeli.chatbotservice.util;
 
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.UUID;
 
 public class RandomKeyGenerator {
@@ -18,5 +20,13 @@ public class RandomKeyGenerator {
             currentArray[randomIndex] = temp;
         }
         return new String(currentArray);
+    }
+
+    public static String generateRandomToken() {
+        String random = UUID.randomUUID().toString().replaceAll("-", "");
+        SecureRandom secureRandom = new SecureRandom();
+        byte[] key = new byte[128];
+        secureRandom.nextBytes(key);
+        return random + Base64.getUrlEncoder().withoutPadding().encodeToString(key).replaceAll("-", "");
     }
 }

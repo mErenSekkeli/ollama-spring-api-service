@@ -1,6 +1,7 @@
 package org.erensekkeli.chatbotservice.general;
 
 import lombok.RequiredArgsConstructor;
+import org.erensekkeli.chatbotservice.exceptions.AuthorizationException;
 import org.erensekkeli.chatbotservice.exceptions.InvalidSessionException;
 import org.erensekkeli.chatbotservice.exceptions.ItemNotFoundException;
 import org.erensekkeli.chatbotservice.exceptions.WrongPathArgumentException;
@@ -89,6 +90,18 @@ public class GeneralControllerAdvice extends ResponseEntityExceptionHandler {
         var restResponse = RestResponse.error(generalErrorMessages);
 
         return new ResponseEntity<>(restResponse, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler
+    public final ResponseEntity<Object> handleInvalidSessionException(AuthorizationException e, WebRequest request) {
+
+        String message = e.getMessage();
+        String description = request.getDescription(false);
+
+        var generalErrorMessages = new GeneralErrorMessages(LocalDateTime.now(), message, description);
+        var restResponse = RestResponse.error(generalErrorMessages);
+
+        return new ResponseEntity<>(restResponse, HttpStatus.UNAUTHORIZED);
     }
 
 

@@ -11,17 +11,23 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.erensekkeli.chatbotservice.enums.EnumStatus;
 import org.erensekkeli.chatbotservice.general.BaseEntity;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
-@Table(name = "customer")
+@Table(name = "customer", indexes = {@Index(columnList = "id", name = "customer_id_index")})
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class Customer extends BaseEntity {
+public class Customer extends BaseEntity implements UserDetails {
 
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "Customer")
     @SequenceGenerator(name = "Customer", sequenceName = "CUSTOMER_ID_SEQ", allocationSize = 1)
@@ -59,4 +65,28 @@ public class Customer extends BaseEntity {
     @OneToMany(mappedBy = "customer", cascade = CascadeType.REMOVE)
     private List<Session> sessions;
 
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return AuthorityUtils.createAuthorityList("ROLE_USER");
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return false;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return false;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return false;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return false;
+    }
 }
