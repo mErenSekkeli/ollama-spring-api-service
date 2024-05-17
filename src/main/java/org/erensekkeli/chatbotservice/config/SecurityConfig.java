@@ -26,13 +26,12 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        //TODO: add Role system to the project
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/session/all-sessions", "/api/v1/session/all-active-sessions", "/api/v1/session/with-id/**").hasRole("ROLE_ADMIN")
-                        .requestMatchers("/api/v1/user-messages", "/api/v1/user-messages/{id}", "/api/v1/user-messages/send").hasRole("ROLE_ADMIN")
+                        .requestMatchers("/api/v1/session/all-sessions", "/api/v1/session/all-active-sessions", "/api/v1/session/with-id/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/user-messages", "/api/v1/user-messages/{id}", "/api/v1/user-messages/send").hasRole("ADMIN")
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/customer").permitAll()
                         .anyRequest().authenticated()

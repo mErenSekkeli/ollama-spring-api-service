@@ -72,7 +72,7 @@ public class UserMessageControllerContractImpl implements UserMessageControllerC
         if (session.isEmpty()) {
             throw new ItemNotFoundException("Session not found with key: " + request.sessionKey());
         }
-        //TODO: check if the message is belong to the session owner
+
         UserMessage userMessage = createNewUserMessage(request, session.get());
 
         return UserMessageMapper.INSTANCE.convertToUserMessageDTO(userMessage);

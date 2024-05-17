@@ -20,14 +20,12 @@ public class UserMessageController {
 
     private final UserMessageControllerContract userMessageControllerContract;
 
-    //TODO: this endpoint should only be accessible by admin users
     @GetMapping
     public ResponseEntity<RestResponse<List<UserMessageDTO>>> getAllUserMessages() {
         List<UserMessageDTO> allUserMessages = userMessageControllerContract.getAllUserMessages();
         return ResponseEntity.ok(RestResponse.of(allUserMessages));
     }
 
-    //TODO: this endpoint should only be accessible by admin users
     @GetMapping("/{id}")
     public ResponseEntity<RestResponse<UserMessageDTO>> getUserMessageById(@PathVariable Long id) {
         UserMessageDTO userMessageById = userMessageControllerContract.getUserMessageById(id);
@@ -64,7 +62,6 @@ public class UserMessageController {
 
     }
 
-    //TODO: this endpoint should only be accessible by admin users because we already saving the messages on llama service
     @PostMapping("/send")
     public ResponseEntity<RestResponse<UserMessageDTO>> sendUserMessage(@RequestBody UserMessageSendRequest request) {
         UserMessageDTO sentUserMessage = userMessageControllerContract.sendUserMessage(request);
