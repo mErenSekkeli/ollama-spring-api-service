@@ -3,6 +3,8 @@ package org.erensekkeli.chatbotservice.controller.contract.impl;
 import lombok.RequiredArgsConstructor;
 import org.erensekkeli.chatbotservice.controller.contract.CustomerControllerContract;
 import org.erensekkeli.chatbotservice.dto.CustomerDTO;
+import org.erensekkeli.chatbotservice.entity.Role;
+import org.erensekkeli.chatbotservice.enums.EnumRole;
 import org.erensekkeli.chatbotservice.request.CustomerSaveRequest;
 import org.erensekkeli.chatbotservice.request.CustomerUpdateRequest;
 import org.erensekkeli.chatbotservice.entity.Customer;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +40,11 @@ public class CustomerControllerContractImpl implements CustomerControllerContrac
     @Override
     public CustomerDTO saveCustomer(CustomerSaveRequest request) {
         Customer customer = CustomerMapper.INSTANCE.convertToCustomer(request);
-
+        Optional<Role> role = customerService.findRoleByName(EnumRole.ROLE_USER);
+        if (role.isEmpty()) {
+            throw new ItemNotFoundException("Role not found with name: " + EnumRole.ROLE_USER);
+        }
+        customer.getRoles().add(role.get());
         customer = customerService.save(customer);
 
         return CustomerMapper.INSTANCE.convertToCustomerDTO(customer);
