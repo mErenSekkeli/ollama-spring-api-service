@@ -90,6 +90,7 @@ public class LlamaService {
 
         // Send the chat request to the Ollama API
         ChatCompletionDTO response = generateChatCompletion(chatCompletionRequest);
+        response.setSessionKey(session.get().getSessionKey());
 
         // Create a new user message for the assistant's response
         UserMessage responseMessage = new UserMessage();

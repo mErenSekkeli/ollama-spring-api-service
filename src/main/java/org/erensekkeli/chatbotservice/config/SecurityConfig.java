@@ -32,6 +32,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/session/all-sessions", "/api/v1/session/all-active-sessions", "/api/v1/session/with-id/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/user-messages", "/api/v1/user-messages/{id}", "/api/v1/user-messages/send").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "api/v1/chat/message").hasRole("ADMIN")
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/customer").permitAll()
                         .anyRequest().authenticated()
